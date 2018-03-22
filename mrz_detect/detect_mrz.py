@@ -40,6 +40,9 @@ class MrzDetect:
         return blackhat
 
     def _reduce_false_mrz_detection(self, blackhat):
+        """
+        ¯\_(ツ)_/¯
+        """
         grad_x = cv2.Sobel(blackhat, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
         grad_x = np.absolute(grad_x)
         (min_val, max_val) = (np.min(grad_x), np.max(grad_x))
