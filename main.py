@@ -2,10 +2,9 @@ from mrz_detect.detect_mrz import MrzDetect
 import argparse
 import cv2
 
-
 mrz_detect = MrzDetect()
 ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--images", required=True, help="path to images directory")
+ap.add_argument("-i", "--image", required=True, help="path to image")
 arg = vars(ap.parse_args())
 mrz = mrz_detect.detect_mrz(arg)
 

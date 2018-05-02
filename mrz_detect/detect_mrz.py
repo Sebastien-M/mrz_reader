@@ -1,7 +1,8 @@
-from imutils import paths
 import numpy as np
 import imutils
 import cv2
+from pytesseract import image_to_string
+from PIL import Image
 
 
 class MrzDetect:
@@ -11,15 +12,18 @@ class MrzDetect:
         self.sqKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 21))
 
     def detect_mrz(self, args):
-        for image_path in paths.list_images(args["images"]):
-            image, gray = self._prepare_image(image_path)
-            blackhat = self._find_dark_regions(gray)
-            grad_x = self._reduce_false_mrz_detection(blackhat)
-            thresh = self._threshold_image(grad_x)
-            thresh = self._enclose_mrz_section(thresh)
-            self._remove_borders(image, thresh)
-            mrz = self._find_contours(thresh, gray, image)
-            return mrz
+        image_path = args["image"]
+        image, gray = self._prepare_image(image_path)
+        blackhat = self._find_dark_regions(gray)
+        grad_x = self._reduce_false_mrz_detection(blackhat)
+        thresh = self._threshold_image(grad_x)
+        thresh = self._enclose_mrz_section(thresh)
+        # self._remove_borders(image, thresh) # maybe not?
+        mrz = self._find_contours(thresh, gray, image)
+        cv2.imwrite('temp.jpg', mrz)
+        temp_img = Image.open('/Users/sebastienM/Desktop/id_check_test/temp.jpg')
+        print image_to_string(temp_img)
+        return mrz
 
     def _prepare_image(self, image_path):
         """
@@ -72,22 +76,17 @@ class MrzDetect:
         cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
                                 cv2.CHAIN_APPROX_SIMPLE)[-2]
         cnts = sorted(cnts, key=cv2.contourArea, reverse=True)
-
+        mrz = None
         for c in cnts:
-
             (x, y, w, h) = cv2.boundingRect(c)
             ar = w / float(h)
             cr_width = w / float(gray.shape[1])
-
             if ar > 5 and cr_width > 0.75:
                 pX = int((x + w) * 0.03)
                 pY = int((y + h) * 0.03)
                 (x, y) = (x - pX, y - pY)
                 (w, h) = (w + (pX * 2), h + (pY * 2))
-
-                roi = image[y:y + h, x:x + w].copy()
+                mrz = image[y:y + h, x:x + w].copy()
                 cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 break
-
-        return roi
-
+        return mrz
